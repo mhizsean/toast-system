@@ -1,9 +1,78 @@
-import { Snackbar, Button, IconButton } from '@mui/material'
 import React, { useEffect, useState, useRef } from 'react'
-import { onMessage } from '../service/mockServer'
+import { Snackbar, Button, IconButton, CircularProgress } from '@mui/material'
+import { onMessage, saveLikedFormSubmission } from '../service/mockServer'
 import CloseIcon from '@mui/icons-material/Close';
+import { useAsync } from 'react-async'
 
-const SubmissionToast = () => {
+const Toast = ({ onClose, submission, onLike}) => {
+    const {
+        isPending,
+        status,
+        run: saveSubmission
+    } = useAsync({
+        
+    deferFn: args => saveLikedFormSubmission(...args),
+    onResolve: onLike,
+    })
+
+    const handleClose = (event, reason) => {
+        if (reason === 'clickaway' || isPending) return
+        onClose()
+      }
+    
+      const handleLike = () => {
+        saveSubmission(submission)
+      }
+
+      const action = (
+        <>
+            {['initial', 'rejected'].includes(status) && (
+        <Button
+          onClickCapture={handleLike}
+          color="secondary"
+          size="small"
+          onClick={handleClose}
+        >
+          {status === 'rejected' ? 'RETRY' : 'LIKE'}
+        </Button>
+      )}
+            {isPending ? (
+        <CircularProgress />
+      ) : (
+        <IconButton
+          size="small"
+          aria-label="close"
+          color="inherit"
+          onClick={handleClose}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      )}
+        </>
+      )
+
+
+      const message = (
+        <>
+          <div>{submission.data.email}</div>
+          <div>{submission.data.firstName}</div>
+          <div>{status}</div>
+        </>
+      )
+
+      return (
+        <Snackbar
+        open
+        autoHideDuration={isPending ? null : 5000}
+        key={submission.id}
+        message={message}
+        onClose={handleClose}
+        action={action}
+      />
+      )
+}
+
+const SubmissionToast = ({onLike}) => {
     const submissions = useRef([])
     const [currentSubmission, setCurrent] = useState(null)
 
@@ -17,40 +86,21 @@ const SubmissionToast = () => {
         })
       })
   }, [])
-  console.log(currentSubmission?.data, "sub")
 
-
-  const handleClose = (event, reason) => {
-    if (reason === 'clickaway') return
+  const handleClose = () => {
     setCurrent(submissions.current.shift() || null)
   }
 
-  const action = (
-    <>
-      <Button color="secondary" size="small" onClick={handleClose}>
-        LIKE
-      </Button>
-      <IconButton
-        size="small"
-        aria-label="close"
-        color="inherit"
-        onClick={handleClose}
-      >
-        <CloseIcon fontSize="small" />
-      </IconButton>
-    </>
-  )
+ 
 
   return (
     currentSubmission && (
-        <Snackbar
-        open
-        autoHideDuration={5000}
+        <Toast 
+        onLike={onLike}
         key={currentSubmission.id}
-        message={currentSubmission.data.email}
+        submission={currentSubmission}
         onClose={handleClose}
-        action={action}
-      />
+        />
     )
   
  )
