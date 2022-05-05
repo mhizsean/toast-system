@@ -1,30 +1,59 @@
-import { Snackbar } from '@mui/material'
-import React, { useEffect, useState } from 'react'
+import { Snackbar, Button, IconButton } from '@mui/material'
+import React, { useEffect, useState, useRef } from 'react'
 import { onMessage } from '../service/mockServer'
 import CloseIcon from '@mui/icons-material/Close';
 
 const SubmissionToast = () => {
-  const [submissions, set] = useState([])
+    const submissions = useRef([])
+    const [currentSubmission, setCurrent] = useState(null)
 
   useEffect(() => {
-    onMessage (data => set(s => [...s, data]))
+    onMessage(data => {
+        setCurrent(current => {
+          if (current) {
+            submissions.current.push(data)
+          }
+          return current ? current : data
+        })
+      })
   }, [])
 
-  const handleClose = id => {
-    set(s => s.filter(submission => submission.id !== id))
+
+  const handleClose = (event, reason) => {
+    if (reason === 'clickaway') return
+    setCurrent(submissions.current.shift() || null)
   }
 
-  return submissions.map(submission => (
-    <Snackbar
-      open
-      key={submission.id}
-      message={submission.data.email}
-      onClose={() => handleClose(submission.id)}
-      action={
-          <CloseIcon/>
-      }
-    />
-  ))
+  const action = (
+    <>
+      <Button color="secondary" size="small" onClick={handleClose}>
+        LIKE
+      </Button>
+      <IconButton
+        size="small"
+        aria-label="close"
+        color="inherit"
+        onClick={handleClose}
+      >
+        <CloseIcon fontSize="small" />
+      </IconButton>
+    </>
+  )
+
+  return (
+    currentSubmission && (
+        <Snackbar
+        open
+        autoHideDuration={5000}
+        key={currentSubmission.id}
+        message={currentSubmission.data.email}
+        onClose={handleClose}
+        action={action}
+      />
+    )
+  
+ )
+  
 }
 
 export default SubmissionToast
