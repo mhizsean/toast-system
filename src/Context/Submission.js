@@ -17,6 +17,7 @@ const SubmissionToast = () => {
         })
       })
   }, [])
+  console.log(currentSubmission?.data, "sub")
 
 
   const handleClose = (event, reason) => {
