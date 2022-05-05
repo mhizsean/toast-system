@@ -15,18 +15,24 @@ export default function Content() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const onLike = submission => {
-    if (data) setData([...data, submission])
-  }
 
-  console.log(onLike, "like")
+  console.log(data, "like")
   return (
     <Box sx={{marginTop: 3}}>
       <Typography variant="h4">Liked Form Submissions</Typography>
 
-      <Typography variant="body1" sx={{fontStyle: 'italic', marginTop: 1}}>
-        TODO: List of liked submissions here (delete this line)
-      </Typography>
+      {isPending && <div>List loading...</div>}
+
+      {data && (
+          <div>
+            {data.map(s => (
+              <div key={s.id}>
+                <Typography variant="body1" sx={{ fontStyle: 'italic', marginTop: 1 }}>{s.data.firstName} {s.data.lastName}</Typography>
+                <span>- {s.data.email} </span>
+              </div>
+            ))}
+          </div>
+        )}
     </Box>
   );
 }
