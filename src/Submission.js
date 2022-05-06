@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { Snackbar, Button, IconButton, CircularProgress } from '@mui/material'
-import { onMessage, saveLikedFormSubmission } from '../service/mockServer'
+import { onMessage, saveLikedFormSubmission } from './service/mockServer'
 import CloseIcon from '@mui/icons-material/Close';
 import { useAsync } from 'react-async'
 
@@ -11,15 +11,20 @@ const Toast = ({ onClose, submission, onLike}) => {
         run: saveSubmission
     } = useAsync({
         deferFn: args => saveLikedFormSubmission(...args),
-        onResolve: onLike,
+        onResolve: () =>
+      onLike({
+        ...submission,
+        data: {
+          ...submission.data,
+          liked: true,
+        },
+      }),
     })
-
-    console.log(status, "ststya")
 
     const handleClose = (event, reason) => {
         if (reason === 'clickaway' || isPending) return
         onClose()
-      }
+    }
     
       const handleLike = () => {
         saveSubmission(submission)
@@ -29,10 +34,9 @@ const Toast = ({ onClose, submission, onLike}) => {
         <>
             {['initial', 'rejected'].includes(status) && (
                 <Button
-                    onClickCapture={handleLike}
                     color="secondary"
                     size="small"
-                    onClick={handleClose}
+                    onClick={handleLike}
                 >
                     {status === 'rejected' ? 'RETRY' : 'LIKE'}
                 </Button>
